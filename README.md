@@ -172,21 +172,9 @@ VIDEO_CONFIG = {
 - **Angle Calculation**: Three-point angle using arctangent
 - **Tracking**: Single-person tracking with confidence filtering
 
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-
 ## 📝 License
 
-This project is open source and available under the MIT License.
-
-## 👤 Author
-
-**Arfahd**
-- GitHub: [@Arfahd](https://github.com/Arfahd)
+This project is open source.
 
 ## 🙏 Acknowledgments
 
