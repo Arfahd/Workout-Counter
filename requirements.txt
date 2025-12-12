@@ -1,0 +1,29 @@
+# Pushup Counter - Requirements File
+# Generated for your laptop specs with Python 3.13.7
+# GPU: NVIDIA GeForce GTX 1050 with CUDA 11.8
+
+# Core Framework
+streamlit==1.51.0
+
+# Video Processing
+streamlit-webrtc==0.64.5
+av==16.0.1
+
+# Computer Vision & AI
+ultralytics==8.3.235
+opencv-python==4.12.0.88
+lap>=0.5.12
+
+# Data Processing
+pandas==2.3.1
+
+# PyTorch with CUDA 11.8 (for GTX 1050 support)
+# Install with: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+torch==2.7.1+cu118
+torchvision==0.22.1+cu118
+
+# Standard library modules (included with Python, listed for reference)
+# - json
+# - os
+# - time
+# - datetime
