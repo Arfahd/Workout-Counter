@@ -16,7 +16,7 @@ PAGE_CONFIG = {
 # Video processing configuration
 VIDEO_CONFIG = {
     "kpts": [6, 8, 10],  # Right arm keypoints
-    "model": "yolo11n-pose.pt",  # Extra Large model for maximum accuracy
+    "model": "yolo11x-pose.pt",  # Extra Large model for maximum accuracy
     "line_width": 2,
     "max_det": 1,
     "device": 0,  # Use GPU (0 = first GPU, 'cpu' for CPU only)

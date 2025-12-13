@@ -1,50 +1,52 @@
 """
 Reusable UI components for the Pushup Counter application.
+Enhanced with UX best practices and accessibility improvements.
 """
 
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from contextlib import contextmanager
 
 
 def render_header():
-    """Render the application header."""
+    """Render the application header with improved accessibility."""
     st.markdown(
         """
-        <div class="header-container">
-            <h1>Pushup Counter</h1>
-            <p class="subtitle" style="padding: 0 2rem;">AI-powered workout tracking with real-time form analysis</p>
+        <div class="header-container" role="banner">
+            <h1>💪 Pushup Counter</h1>
+            <p class="subtitle">AI-powered workout tracking with real-time form analysis</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_counter_display(current_count, confidence):
+def render_counter_display(current_count, is_streaming):
     """
-    Render the real-time counter display with confidence indicator.
+    ALWAYS VISIBLE counter display - UX Best Practice: Visibility of System Status
 
     Args:
         current_count (int): Current pushup count
-        confidence (float): Confidence score (0.0 to 1.0)
+        is_streaming (bool): Whether workout is active
     """
-    from utils import get_confidence_status
-
-    confidence_pct = confidence * 100
-    conf_color, conf_status = get_confidence_status(confidence_pct)
+    if is_streaming:
+        status_text = "In Progress"
+        status_color = "#10B981"
+        size_class = "counter-streaming"
+    else:
+        status_text = "Ready to Start"
+        status_color = "#6B7280"
+        size_class = "counter-idle"
 
     st.markdown(
         f"""
-        <div class="counter-container">
+        <div class="counter-main {size_class}" role="status" aria-live="polite" aria-atomic="true">
             <div class="counter-label">Current Count</div>
-            <div class="counter-value">{current_count}</div>
-            <div class="counter-sublabel">pushups completed</div>
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); margin-bottom: 0.25rem;">Detection Confidence</div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="font-size: 1.25rem; font-weight: 600; color: {conf_color};">{confidence_pct:.0f}%</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.1); padding: 0.125rem 0.5rem; border-radius: 0.25rem;">{conf_status}</div>
-                </div>
+            <div class="counter-value" aria-label="{current_count} pushups">{current_count}</div>
+            <div class="counter-status" style="color: {status_color};">
+                <span class="status-indicator" style="background: {status_color};"></span>
+                {status_text}
             </div>
         </div>
         """,
@@ -52,9 +54,38 @@ def render_counter_display(current_count, confidence):
     )
 
 
-def render_session_timers(duration_str, rate, confidence):
+def render_status_badge(is_streaming):
     """
-    Render session timers and statistics.
+    Simplified status badge - less intrusive
+
+    Args:
+        is_streaming (bool): Whether the video stream is active
+    """
+    if is_streaming:
+        st.markdown(
+            """
+            <div class="status-mini" role="status">
+                <span class="status-dot live"></span>
+                <span>LIVE</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            """
+            <div class="status-mini" role="status">
+                <span class="status-dot idle"></span>
+                <span>IDLE</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_session_stats(duration_str, rate, confidence):
+    """
+    Simplified session stats - only shown during workout (Progressive Disclosure)
 
     Args:
         duration_str (str): Formatted duration string (MM:SS)
@@ -64,90 +95,70 @@ def render_session_timers(duration_str, rate, confidence):
     from utils import get_confidence_status
 
     confidence_pct = confidence * 100
-    conf_color, _ = get_confidence_status(confidence_pct)
+    conf_color, conf_status = get_confidence_status(confidence_pct)
 
-    col_timer, col_rate, col_conf = st.columns(3)
-
-    with col_timer:
-        st.markdown(
-            f"""
-            <div class="timer-display">
-                <div class="timer-value">{duration_str}</div>
-                <div class="timer-label">Session Time</div>
+    st.markdown(
+        f"""
+        <div class="session-stats-compact">
+            <div class="stat-item">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-content">
+                    <div class="stat-value">{duration_str}</div>
+                    <div class="stat-label">Duration</div>
+                </div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col_rate:
-        st.markdown(
-            f"""
-            <div class="timer-display">
-                <div class="timer-value">{rate:.1f}</div>
-                <div class="timer-label">Reps/Min</div>
+            <div class="stat-item">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-content">
+                    <div class="stat-value">{rate:.1f}</div>
+                    <div class="stat-label">Reps/Min</div>
+                </div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col_conf:
-        st.markdown(
-            f"""
-            <div class="timer-display" style="background: linear-gradient(135deg, {conf_color}22 0%, {conf_color}44 100%); border: 2px solid {conf_color}66;">
-                <div class="timer-value" style="color: {conf_color};">{confidence_pct:.0f}%</div>
-                <div class="timer-label">Confidence</div>
+            <div class="stat-item">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <div class="stat-value" style="color: {conf_color};">{confidence_pct:.0f}%</div>
+                    <div class="stat-label">Confidence</div>
+                </div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
-def render_status_card(is_streaming):
+def render_loading_state(message="Loading..."):
     """
-    Render the session status card.
+    Loading state with spinner - UX Best Practice: Provide Feedback
 
     Args:
-        is_streaming (bool): Whether the video stream is active
+        message (str): Loading message to display
     """
-    if is_streaming:
-        st.markdown(
-            """
-            <div class="status-card-active">
-                <span class="status-badge status-active">
-                    <span class="status-dot"></span>
-                    LIVE
-                </span>
-                <div class="card-title">Recording Session</div>
-                <div class="card-description">Pushup counter is active on the video feed. Complete your set and save when done.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            """
-            <div class="status-card">
-                <span class="status-badge status-inactive">
-                    <span class="status-dot"></span>
-                    IDLE
-                </span>
-                <div class="card-title">Ready to Start</div>
-                <div class="card-description">Position yourself in the camera view and start your workout session.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        f"""
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <div class="loading-text">{message}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_video_placeholder():
-    """Render the video placeholder when not streaming."""
+    """Enhanced video placeholder with better visual hierarchy."""
     st.markdown(
         """
         <div class="video-placeholder">
-            <div class="empty-state-icon">📹</div>
-            <div class="empty-state-text">
-                <strong>Camera Preview</strong><br>
-                Start a session to begin tracking
+            <div class="placeholder-icon">📹</div>
+            <div class="placeholder-title">Camera Preview</div>
+            <div class="placeholder-text">
+                Click "Start Workout Session" above to begin tracking
+            </div>
+            <div class="placeholder-tips">
+                <div class="tip-item">✓ Position yourself sideways to camera</div>
+                <div class="tip-item">✓ Ensure good lighting</div>
+                <div class="tip-item">✓ Keep right arm visible</div>
             </div>
         </div>
         """,
@@ -157,7 +168,7 @@ def render_video_placeholder():
 
 def render_statistics(df, personal_best):
     """
-    Render statistics metrics grid.
+    Cleaner statistics display with focus on key metrics
 
     Args:
         df (pd.DataFrame): DataFrame containing pushup history
@@ -169,18 +180,26 @@ def render_statistics(df, personal_best):
 
     st.markdown(
         f"""
-        <div class="metric-grid">
-            <div class="metric-card">
-                <div class="metric-label">Total</div>
-                <div class="metric-value" style="color: #3B82F6;">{total_pushups}</div>
+        <div class="stats-grid">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-card-icon">🏆</div>
+                <div class="stat-card-value">{personal_best}</div>
+                <div class="stat-card-label">Personal Best</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Average</div>
-                <div class="metric-value" style="color: #10B981;">{avg_pushups:.0f}</div>
+            <div class="stat-card stat-card-secondary">
+                <div class="stat-card-icon">📊</div>
+                <div class="stat-card-value">{total_pushups}</div>
+                <div class="stat-card-label">Total Pushups</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Sessions</div>
-                <div class="metric-value" style="color: #8B5CF6;">{total_sessions}</div>
+            <div class="stat-card stat-card-tertiary">
+                <div class="stat-card-icon">📈</div>
+                <div class="stat-card-value">{avg_pushups:.0f}</div>
+                <div class="stat-card-label">Average</div>
+            </div>
+            <div class="stat-card stat-card-quaternary">
+                <div class="stat-card-icon">🎯</div>
+                <div class="stat-card-value">{total_sessions}</div>
+                <div class="stat-card-label">Sessions</div>
             </div>
         </div>
         """,
@@ -188,33 +207,9 @@ def render_statistics(df, personal_best):
     )
 
 
-def render_personal_best(personal_best):
-    """
-    Render the personal best display.
-
-    Args:
-        personal_best (int): Personal best pushup count
-    """
-    if personal_best > 0:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6347 100%); background-size: 200% 200%; animation: gradient-shift 3s ease infinite; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem; text-align: center; box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);">
-                <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 2rem; animation: celebrate 1s ease infinite;">🏆</span>
-                    <div>
-                        <div style="font-size: 0.75rem; font-weight: 500; color: rgba(255, 255, 255, 0.95); text-transform: uppercase; letter-spacing: 0.05em; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);">Personal Best</div>
-                        <div style="font-size: 1.75rem; font-weight: 700; color: white; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">{personal_best} pushups</div>
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
 def render_session_history(recent_sessions, max_pushups):
     """
-    Render recent session history.
+    Improved session history with better visual design
 
     Args:
         recent_sessions (list): List of session dictionaries
@@ -230,32 +225,46 @@ def render_session_history(recent_sessions, max_pushups):
         progress_pct = (count / max_pushups) if max_pushups > 0 else 0
 
         with st.container(border=True):
-            col_main, col_badge = st.columns([4, 1])
+            col_main, col_count = st.columns([3, 1])
 
             with col_main:
+                st.markdown(
+                    f"<div class='session-date'>{date} at {time_str}</div>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"<div class='session-duration'>Duration: {duration}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            with col_count:
                 if is_pb:
                     st.markdown(
-                        f"<span style='font-size: 1.1rem; font-weight: 600; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);'>{count} pushups</span> "
-                        f"<span style='background: linear-gradient(135deg, #FFD700, #FFA500); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 8px rgba(255,215,0,0.4);'>🏆 PB</span>",
+                        f"""
+                        <div class='session-count pb'>
+                            <span class='count-value'>{count}</span>
+                            <span class='count-badge'>🏆 PB</span>
+                        </div>
+                        """,
                         unsafe_allow_html=True,
                     )
                 else:
                     st.markdown(
-                        f"<span style='font-size: 1.1rem; font-weight: 600; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);'>{count} pushups</span>",
+                        f"""
+                        <div class='session-count'>
+                            <span class='count-value'>{count}</span>
+                        </div>
+                        """,
                         unsafe_allow_html=True,
                     )
-
-                st.markdown(
-                    f"<span style='font-size: 0.875rem; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(0,0,0,0.2);'>{date} at {time_str} • {duration}</span>",
-                    unsafe_allow_html=True,
-                )
 
             st.progress(progress_pct, text="")
 
 
 def render_new_pb_message(final_count, duration_str):
     """
-    Render new personal best celebration message.
+    Celebration modal for new personal best with confetti animation
+    Creates a centered overlay modal that focuses attention on the achievement
 
     Args:
         final_count (int): Final pushup count
@@ -263,11 +272,21 @@ def render_new_pb_message(final_count, duration_str):
     """
     st.markdown(
         f"""
-        <div class="success-message" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6347 100%); background-size: 200% 200%; animation: gradient-shift 3s ease infinite; border: none; border-radius: 1rem; padding: 2rem; margin-bottom: 1rem; text-align: center; box-shadow: 0 10px 40px rgba(255, 215, 0, 0.5);">
-            <div style="font-size: 3.5rem; margin-bottom: 0.5rem; animation: celebrate 1s ease infinite;">🎉</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">New Personal Best!</div>
-            <div style="font-size: 1rem; color: white; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);">
-                <strong style="font-size: 1.25rem;">{final_count} pushups</strong> in {duration_str}
+        <div class="celebration-modal-overlay" role="dialog" aria-labelledby="pb-title" aria-modal="true">
+            <div class="celebration-modal">
+                <div class="celebration-confetti-bg">
+                    <span class="confetti">🎉</span>
+                    <span class="confetti">🎊</span>
+                    <span class="confetti">✨</span>
+                    <span class="confetti">🌟</span>
+                    <span class="confetti">💫</span>
+                    <span class="confetti">⭐</span>
+                </div>
+                <div class="celebration-icon">🎉</div>
+                <div id="pb-title" class="celebration-title">New Personal Best!</div>
+                <div class="celebration-count">{final_count} pushups</div>
+                <div class="celebration-duration">Completed in {duration_str}</div>
+                <div class="celebration-message">Amazing work! Keep it up! 💪</div>
             </div>
         </div>
         """,
@@ -275,36 +294,40 @@ def render_new_pb_message(final_count, duration_str):
     )
 
 
-def render_empty_state():
-    """Render the empty state when no history exists."""
+def render_enhanced_empty_state():
+    """
+    Enhanced empty state with clear CTA and onboarding
+    UX Best Practice: Guide users with clear next steps
+    """
     st.markdown(
-        """
-        <div class="empty-state">
-            <div class="empty-state-icon">💪</div>
-            <div class="empty-state-text">
-                <strong>Ready to start your fitness journey?</strong><br>
-                Begin your first session to track your progress<br>
-                <span style="font-size: 0.75rem; color: #9CA3AF;">Your workout statistics will appear here</span>
-            </div>
-        </div>
-        """,
+        '<div class="empty-state-enhanced">'
+        '<div class="empty-icon">💪</div>'
+        '<div class="empty-title">Ready to Start Your Fitness Journey?</div>'
+        '<div class="empty-subtitle">Track your pushups with AI-powered precision</div>'
+        '<div class="setup-checklist">'
+        '<div class="checklist-title">Quick Setup Guide:</div>'
+        '<div class="checklist-item"><span class="check">✓</span><span>Position yourself sideways to the camera</span></div>'
+        '<div class="checklist-item"><span class="check">✓</span><span>Ensure good lighting for accurate tracking</span></div>'
+        '<div class="checklist-item"><span class="check">✓</span><span>Keep your right arm visible throughout</span></div>'
+        '<div class="checklist-item"><span class="check">✓</span><span>Maintain proper form for best results</span></div>'
+        "</div>"
+        '<div class="empty-cta">'
+        '<div class="cta-arrow">👆</div>'
+        '<div class="cta-text">Click "Start Workout Session" above to begin!</div>'
+        "</div>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
 
-def render_tips():
-    """Render tips for best results."""
-    st.markdown("### 💡 Tips for Best Results")
-    st.markdown(
-        """
-        <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 1rem; padding: 1.5rem; font-size: 0.875rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
-            <ul style="margin: 0; padding-left: 1.25rem; color: rgba(255, 255, 255, 0.95); line-height: 1.75; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);">
-                <li style="margin-bottom: 0.5rem;">✨ Ensure good lighting for accurate tracking</li>
-                <li style="margin-bottom: 0.5rem;">📹 Position yourself fully visible in frame</li>
-                <li style="margin-bottom: 0.5rem;">💪 Maintain proper form throughout your set</li>
-                <li>👁️ Keep your right arm visible to the camera</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+@contextmanager
+def render_collapsible_section(title, is_expanded=True):
+    """
+    Collapsible section wrapper for better content organization
+
+    Args:
+        title (str): Section title
+        is_expanded (bool): Whether section is expanded by default
+    """
+    with st.expander(title, expanded=is_expanded):
+        yield
