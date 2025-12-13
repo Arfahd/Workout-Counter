@@ -244,6 +244,7 @@ if st.session_state.pushup_history:
                 file_name=f"pushup_history_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
                 use_container_width=True,
+                type="primary",
             )
 
         with col_clear:
