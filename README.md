@@ -97,9 +97,13 @@ This project is open source.
 
 ## 🙏 Acknowledgments
 
-- [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for pose estimation
-- [Streamlit](https://streamlit.io/) for the web framework
-- [OpenCV](https://opencv.org/) for image processing
+- [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for pose estimation models
+- [PyTorch](https://pytorch.org/) for deep learning framework
+- [Streamlit](https://streamlit.io/) for the web interface
+- [streamlit-webrtc](https://github.com/whitphx/streamlit-webrtc) for real-time webcam streaming
+- [OpenCV](https://opencv.org/) for computer vision and image processing
+- [Pandas](https://pandas.pydata.org/) for data management
+- [PyAV](https://github.com/PyAV-Org/PyAV) for video frame processing
 
 ---
 
