@@ -78,7 +78,7 @@ VIDEO_CONFIG = {
 
 1. **Run the application**:
 ```bash
-streamlit run wsnedit.py
+streamlit run app.py
 ```
 
 2. **Start a session**:
@@ -95,7 +95,7 @@ streamlit run wsnedit.py
 
 ```
 Workout-Counter/
-├── wsnedit.py              # Main Streamlit application
+├── app.py                  # Main Streamlit application
 ├── video_processor.py      # Video processing and pose detection
 ├── components.py           # UI components
 ├── config.py              # Configuration settings
