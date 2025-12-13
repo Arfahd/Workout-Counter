@@ -1,22 +1,24 @@
 # 💪 Workout Counter
 
-AI-powered pushup counter with real-time pose estimation and full body skeleton visualization.
+AI-powered pushup counter with real-time pose estimation focused on right arm tracking.
 
 ## ✨ Features
 
 - **Real-time Pushup Counting**: Automatic pushup detection and counting using YOLO pose estimation
-- **Full Body Skeleton Visualization**: Display all 17 COCO keypoints with color-coded highlighting
+- **Right Arm Tracking**: Focused detection of 3 key points (shoulder, elbow, wrist)
 - **Angle Calculation**: Track elbow angle in real-time for form analysis
 - **Confidence Monitoring**: Visual confidence indicators for pose detection quality
 - **Session History**: Track and export workout sessions
 - **Personal Best Tracking**: Keep track of your highest pushup count
 - **Professional UI**: Clean, modern interface with gradient backgrounds
 
+> 💡 **Want full body skeleton visualization?** Check out the [`full-body-visualization`](https://github.com/Arfahd/Workout-Counter/tree/full-body-visualization) branch that displays all 17 COCO keypoints!
+
 ## 🎯 How It Works
 
 The application uses YOLO11 pose estimation to:
-1. Detect body keypoints (17 COCO points: shoulders, elbows, wrists, hips, knees, etc.)
-2. Calculate the angle at the right elbow joint using shoulder-elbow-wrist points
+1. Detect 3 key body keypoints on the right arm: shoulder (6), elbow (8), wrist (10)
+2. Calculate the angle at the right elbow joint using these 3 points
 3. Count pushups based on angle thresholds:
    - **Up position**: Elbow angle > 145°
    - **Down position**: Elbow angle < 90°
@@ -128,12 +130,10 @@ VIDEO_CONFIG = {
 
 ## 🎨 Features Breakdown
 
-### Full Body Visualization
-- All 17 COCO keypoints displayed with skeleton lines
-- Color-coded keypoints:
-  - 🔴 **Red**: Right arm (used for angle calculation)
-  - 🟡 **Yellow**: Head/face
-  - 🟢 **Green**: Other body parts
+### Right Arm Visualization
+- 3 keypoints displayed: shoulder, elbow, wrist
+- Skeleton lines connecting the right arm joints
+- Optimized for performance and focused tracking
 
 ### Angle Calculation
 - Real-time elbow angle measurement
@@ -159,8 +159,8 @@ VIDEO_CONFIG = {
 - Reduce `max_det` in config
 
 ### Pushups not counting
-- Ensure your full body is visible in frame
-- Check that right arm is clearly visible
+- Ensure your right arm (shoulder, elbow, wrist) is clearly visible in frame
+- Check that the right side of your body is facing the camera
 - Adjust lighting for better detection
 - Lower the confidence threshold
 
@@ -168,7 +168,7 @@ VIDEO_CONFIG = {
 
 - **Framework**: Streamlit + WebRTC
 - **Pose Estimation**: Ultralytics YOLO11-pose
-- **Keypoint Format**: COCO (17 points)
+- **Keypoints Detected**: 3 points (right arm: shoulder, elbow, wrist)
 - **Angle Calculation**: Three-point angle using arctangent
 - **Tracking**: Single-person tracking with confidence filtering
 
