@@ -73,8 +73,8 @@ class GymProcessor(VideoProcessorBase):
                 # Fallback to original image if results not available
                 annotated_img = img
 
-            # Draw all keypoints on top (while keeping angle calculation from right arm)
-            annotated_img = self._draw_all_keypoints(annotated_img)
+            # Note: Only 3 keypoints (right arm) are detected and shown
+            # For full body visualization, see the 'full-body-visualization' branch
 
             # Return the processed image to the browser
             return av.VideoFrame.from_ndarray(annotated_img, format="bgr24")
@@ -149,74 +149,3 @@ class GymProcessor(VideoProcessorBase):
                 )
         except Exception:
             pass
-
-    def _draw_all_keypoints(self, img):
-        """
-        Draw all 17 COCO keypoints on the image.
-
-        This displays the full body skeleton while AIGym continues to use
-        only the right arm keypoints [6, 8, 10] for angle calculation.
-
-        Args:
-            img: Image to draw keypoints on
-
-        Returns:
-            np.ndarray: Image with all keypoints drawn
-        """
-        if not hasattr(self.gym, "tracks") or self.gym.tracks is None:
-            return img
-
-        if (
-            not hasattr(self.gym.tracks, "keypoints")
-            or self.gym.tracks.keypoints is None
-        ):
-            return img
-
-        kpt_data = self.gym.tracks.keypoints.data
-        conf_thresh = 0.5  # Confidence threshold for displaying keypoints
-
-        # COCO skeleton connections (pairs of keypoint indices to connect with lines)
-        skeleton = [
-            [0, 1],
-            [0, 2],
-            [1, 3],
-            [2, 4],  # Head
-            [5, 6],
-            [5, 7],
-            [7, 9],
-            [6, 8],
-            [8, 10],  # Arms
-            [5, 11],
-            [6, 12],
-            [11, 12],  # Torso
-            [11, 13],
-            [13, 15],
-            [12, 14],
-            [14, 16],  # Legs
-        ]
-
-        for k in kpt_data:
-            # Draw skeleton lines
-            for pt1_idx, pt2_idx in skeleton:
-                if k[pt1_idx][2] >= conf_thresh and k[pt2_idx][2] >= conf_thresh:
-                    pt1 = (int(k[pt1_idx][0]), int(k[pt1_idx][1]))
-                    pt2 = (int(k[pt2_idx][0]), int(k[pt2_idx][1]))
-                    cv2.line(img, pt1, pt2, (0, 255, 0), 2, lineType=cv2.LINE_AA)
-
-            # Draw keypoint circles
-            for i, kpt in enumerate(k):
-                if kpt[2] >= conf_thresh:  # Check confidence
-                    x, y = int(kpt[0]), int(kpt[1])
-                    # Use different colors for different body parts
-                    if i in [6, 8, 10]:  # Right arm (used for calculation) - Red
-                        color = (0, 0, 255)
-                        radius = 5  # Slightly larger for emphasis
-                    elif i < 5:  # Head - Yellow
-                        color = (0, 255, 255)
-                        radius = 4
-                    else:  # Other parts - Green
-                        color = (0, 255, 0)
-                        radius = 4
-                    cv2.circle(img, (x, y), radius, color, -1, lineType=cv2.LINE_AA)
-
-        return img
