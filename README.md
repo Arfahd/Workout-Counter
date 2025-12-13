@@ -136,9 +136,9 @@ VIDEO_CONFIG = {
 - Optimized for performance and focused tracking
 
 ### Angle Calculation
-- Real-time elbow angle measurement
-- Highlighted right arm for form checking
-- Angle displayed on video feed
+- Real-time elbow angle measurement (calculated internally)
+- Used to detect up/down positions for pushup counting
+- Right arm keypoints visualized for form checking
 
 ### Session Tracking
 - Real-time pushup counter
