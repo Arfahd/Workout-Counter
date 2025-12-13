@@ -836,8 +836,13 @@ def apply_custom_styles():
             color: white !important;
             border: none !important;
             border-radius: var(--radius-md) !important;
+            padding: var(--space-md) var(--space-xl) !important;
+            font-size: var(--font-size-md) !important;
             font-weight: 600 !important;
+            min-height: 56px !important;
+            transition: all var(--transition-base) !important;
             box-shadow: var(--shadow-md) !important;
+            cursor: pointer !important;
         }
         
         .stDownloadButton > button:hover {
