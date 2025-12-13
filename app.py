@@ -51,8 +51,6 @@ if "session_start" not in st.session_state:
     st.session_state.session_start = None
 if "pushup_history" not in st.session_state:
     st.session_state.pushup_history = []
-if "current_count" not in st.session_state:
-    st.session_state.current_count = 0
 if "personal_best" not in st.session_state:
     st.session_state.personal_best = 0
 if "camera_initializing" not in st.session_state:
@@ -257,25 +255,3 @@ if st.session_state.pushup_history:
                 st.rerun()
 else:
     render_enhanced_empty_state()
-
-# Keyboard shortcuts info (Accessibility)
-st.markdown("---")
-with st.expander("⌨️ Keyboard Shortcuts"):
-    st.markdown("""
-    - **Space**: Start/Stop workout
-    - **Esc**: Cancel workout
-    - **H**: Toggle history
-    - **?**: Show this help
-    """)
-
-# Footer with accessibility info
-st.markdown(
-    """
-    <div style="text-align: center; padding: 2rem 0; color: rgba(255,255,255,0.6); font-size: 0.75rem;">
-        Made with ❤️ using AI-powered pose detection<br>
-        <a href="#" style="color: rgba(255,255,255,0.8); text-decoration: none;">Accessibility Statement</a> • 
-        <a href="#" style="color: rgba(255,255,255,0.8); text-decoration: none;">Privacy Policy</a>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)

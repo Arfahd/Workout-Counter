@@ -4,8 +4,6 @@ Enhanced with UX best practices and accessibility improvements.
 """
 
 import streamlit as st
-import pandas as pd
-from datetime import datetime
 from contextlib import contextmanager
 
 
