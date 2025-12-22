@@ -40,6 +40,31 @@ def save_history(exercise, count):
     df = pd.concat([new_data, df], ignore_index=True)
     df.to_csv(HISTORY_FILE, index=False)
 
+# --- CALLBACK UNTUK TOMBOL STOP (SOLUSI BUG SIMPAN) ---
+def stop_webcam_callback():
+    """Callback ini dipanggil SEBELUM script rerun, menjamin data tersimpan."""
+    # 1. Matikan status aktif agar script tidak mencoba buka kamera lagi
+    st.session_state.webcam_active = False
+    
+    # 2. Cek apakah ada data yang perlu disimpan
+    if 'analyzer' in st.session_state:
+        analyzer = st.session_state.analyzer
+        if analyzer.counter > 0:
+            save_history(analyzer.exercise_type, analyzer.counter)
+            # Simpan pesan sukses di session state untuk ditampilkan setelah rerun
+            st.session_state.save_message = {
+                "type": "success", 
+                "text": f"✅ Latihan Disimpan: {analyzer.exercise_type} ({analyzer.counter} Reps)"
+            }
+            # Reset counter
+            analyzer.counter = 0
+            analyzer.stage = None
+        else:
+            st.session_state.save_message = {
+                "type": "info", 
+                "text": "🛑 Latihan dihentikan. Tidak ada repetisi untuk disimpan."
+            }
+
 # --- JUDUL & SIDEBAR ---
 st.title("AI Workout Assistant (High Res)")
 st.markdown("""
@@ -299,6 +324,17 @@ with col2:
 with col1:
     st_frame = st.empty()
 
+# --- MENAMPILKAN PESAN SUKSES SETELAH STOP ---
+# Kita cek apakah ada pesan yang ditinggalkan oleh Callback Stop
+if 'save_message' in st.session_state:
+    msg = st.session_state.save_message
+    if msg['type'] == 'success':
+        st.success(msg['text'])
+    else:
+        st.info(msg['text'])
+    # Hapus pesan agar tidak muncul terus
+    del st.session_state.save_message
+
 cap = None
 
 # --- BAGIAN UTAMA YANG DIPERBAIKI (STATE MANAGEMENT) ---
@@ -315,7 +351,7 @@ elif input_source == "Webcam":
     if 'webcam_active' not in st.session_state:
         st.session_state.webcam_active = False
 
-    # Tombol Start/Stop Webcam
+    # Tombol Start Webcam
     if not st.session_state.webcam_active:
         if st.button("Mulai Webcam (Resolusi Max)"):
             st.session_state.webcam_active = True
@@ -335,27 +371,11 @@ elif input_source == "Webcam":
 if cap is not None and cap.isOpened():
     # --- TOMBOL STOP & SAVE ---
     # Tombol ini akan menghentikan loop while di bawahnya
-    stop_button = st.button("Stop & Simpan", type="primary", use_container_width=True)
+    # PERBAIKAN: Menggunakan callback (on_click) untuk menjamin penyimpanan data
+    st.button("Stop & Simpan", type="primary", use_container_width=True, on_click=stop_webcam_callback)
     
-    if stop_button:
-        # Logika Penyimpanan
-        if analyzer.counter > 0:
-            save_history(exercise_type, analyzer.counter)
-            st.success(f"Latihan Disimpan: {exercise_type} ({analyzer.counter} Reps)")
-            # Reset counter setelah simpan agar siap untuk sesi berikutnya
-            analyzer.counter = 0
-            analyzer.stage = None
-        else:
-            st.info("Latihan dihentikan. Tidak ada repetisi untuk disimpan.")
-        
-        # Matikan webcam state setelah stop ditekan
-        if input_source == "Webcam":
-            st.session_state.webcam_active = False
-            cap.release() # Lepas kamera
-            # Kita tidak perlu st.rerun() di sini karena script akan selesai dan UI akan update otomatis
-
-    # Loop hanya jalan jika tombol Stop BELUM ditekan
-    while not stop_button and cap.isOpened():
+    # Loop hanya jalan jika webcam masih berstatus aktif (belum distop lewat callback)
+    while st.session_state.get('webcam_active', True) and cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             # --- LOGIKA AUTO-SAVE SAAT VIDEO UPLOAD SELESAI ---
@@ -442,7 +462,8 @@ if cap is not None and cap.isOpened():
             pass
 
     # Jangan release di sini jika webcam masih aktif, tapi karena kita break loop, ok untuk release jika stop ditekan
-    if stop_button or not st.session_state.get('webcam_active', True):
+    # Jika loop berhenti karena tombol stop ditekan (via callback webcam_active jadi False), cap.release()
+    if not st.session_state.get('webcam_active', True):
         cap.release()
 else:
     with col1:
