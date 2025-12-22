@@ -51,11 +51,15 @@ Data latihan akan otomatis disimpan saat tombol **Stop & Simpan** ditekan.
 # --- MODIFIKASI: Menggunakan Form agar tidak auto-reload ---
 with st.sidebar.form(key='config_form'):
     st.header("Pengaturan")
-    # Menambahkan opsi YOLOv8 dan YOLO11 lengkap (n, s, m, l, x)
+    # Menambahkan opsi YOLOv8 dan YOLO11 lengkap + Seri P6 (High Res)
     model_type = st.selectbox(
         "Pilih Model", 
         [
+            # YOLOv8 Standard (640px)
             "yolov8n-pose.pt", "yolov8s-pose.pt", "yolov8m-pose.pt", "yolov8l-pose.pt", "yolov8x-pose.pt",
+            # YOLOv8 P6 - High Resolution (1280px) - Lebih berat tapi akurat buat objek kecil/jauh
+            "yolov8n6-pose.pt", "yolov8s6-pose.pt", "yolov8m6-pose.pt", "yolov8l6-pose.pt", "yolov8x6-pose.pt",
+            # YOLO11 Standard (640px) - SOTA (State of the Art) saat ini
             "yolo11n-pose.pt", "yolo11s-pose.pt", "yolo11m-pose.pt", "yolo11l-pose.pt", "yolo11x-pose.pt"
         ]
     )
