@@ -301,21 +301,37 @@ with col1:
 
 cap = None
 
+# --- BAGIAN UTAMA YANG DIPERBAIKI (STATE MANAGEMENT) ---
+
 if input_source == "Video Upload":
     uploaded_file = st.file_uploader("Upload Video Latihan (Resolusi Asli)", type=['mp4', 'mov', 'avi'])
     if uploaded_file is not None:
         tfile = tempfile.NamedTemporaryFile(delete=False) 
         tfile.write(uploaded_file.read())
         cap = cv2.VideoCapture(tfile.name)
+
 elif input_source == "Webcam":
-    if st.button("Mulai Webcam (Resolusi Max)"):
+    # Inisialisasi State Webcam jika belum ada
+    if 'webcam_active' not in st.session_state:
+        st.session_state.webcam_active = False
+
+    # Tombol Start/Stop Webcam
+    if not st.session_state.webcam_active:
+        if st.button("Mulai Webcam (Resolusi Max)"):
+            st.session_state.webcam_active = True
+            st.rerun() # Rerun agar cap langsung terinisialisasi
+    else:
+        # Jika aktif, kita inisialisasi cap
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
              cap = cv2.VideoCapture(1)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 10000)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 10000)
+        
+        # Pesan kecil bahwa webcam aktif
         st.toast(f"Webcam Aktif")
 
+# LOGIKA UTAMA: Proses video hanya jika cap berhasil dibuka
 if cap is not None and cap.isOpened():
     # --- TOMBOL STOP & SAVE ---
     # Tombol ini akan menghentikan loop while di bawahnya
@@ -331,19 +347,27 @@ if cap is not None and cap.isOpened():
             analyzer.stage = None
         else:
             st.info("Latihan dihentikan. Tidak ada repetisi untuk disimpan.")
+        
+        # Matikan webcam state setelah stop ditekan
+        if input_source == "Webcam":
+            st.session_state.webcam_active = False
+            cap.release() # Lepas kamera
+            # Kita tidak perlu st.rerun() di sini karena script akan selesai dan UI akan update otomatis
 
-    while cap.isOpened() and not stop_button:
+    # Loop hanya jalan jika tombol Stop BELUM ditekan
+    while not stop_button and cap.isOpened():
         ret, frame = cap.read()
         if not ret:
-            # --- LOGIKA AUTO-SAVE SAAT VIDEO SELESAI ---
-            if analyzer.counter > 0:
-                save_history(exercise_type, analyzer.counter)
-                st.success(f"Video Selesai. Latihan Disimpan: {exercise_type} ({analyzer.counter} Reps)")
-                # Reset counter
-                analyzer.counter = 0
-                analyzer.stage = None
-            else:
-                st.warning("Video selesai. Tidak ada repetisi untuk disimpan.")
+            # --- LOGIKA AUTO-SAVE SAAT VIDEO UPLOAD SELESAI ---
+            if input_source == "Video Upload":
+                if analyzer.counter > 0:
+                    save_history(exercise_type, analyzer.counter)
+                    st.success(f"Video Selesai. Latihan Disimpan: {exercise_type} ({analyzer.counter} Reps)")
+                    # Reset counter
+                    analyzer.counter = 0
+                    analyzer.stage = None
+                else:
+                    st.warning("Video selesai. Tidak ada repetisi untuk disimpan.")
             break
         
         h, w, _ = frame.shape
@@ -417,7 +441,12 @@ if cap is not None and cap.isOpened():
             # Mengabaikan error jika frame gagal dirender saat cleanup (video selesai)
             pass
 
-    cap.release()
+    # Jangan release di sini jika webcam masih aktif, tapi karena kita break loop, ok untuk release jika stop ditekan
+    if stop_button or not st.session_state.get('webcam_active', True):
+        cap.release()
 else:
     with col1:
-        st.info("Menunggu input...")
+        if input_source == "Webcam":
+            st.info("Klik 'Mulai Webcam' untuk memulai.")
+        else:
+            st.info("Menunggu upload video...")
